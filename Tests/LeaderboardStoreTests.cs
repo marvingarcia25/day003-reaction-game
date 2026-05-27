@@ -93,10 +93,11 @@ public class LeaderboardStoreTests
         var store = NewStore();
         for (int i = 0; i < 1000; i++)
             store.Add($"P{i:D4}", 100.0 + i, 5);
-        // Slowest is P0999 at 1099ms. Adding a fast entry should boot the slowest.
+        // Slowest is P0999 at 1099ms. Adding a fast entry triggers the cap — P0999 should be dropped.
         store.Add("FAST", 50.0, 5);
         var top10 = store.GetTop10();
         Assert.Equal(50.0, top10[0].AverageMs);
+        Assert.DoesNotContain(top10, e => e.Name == "P0999");
     }
 
     [Fact]
