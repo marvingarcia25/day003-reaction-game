@@ -6,7 +6,6 @@ builder.Services.AddSingleton<LeaderboardStore>();
 
 var app = builder.Build();
 app.UseStaticFiles();
-app.UseRouting();
 app.MapRazorPages();
 
 app.MapGet("/api/leaderboard", (LeaderboardStore store) =>
@@ -22,7 +21,7 @@ app.MapPost("/api/leaderboard", (LeaderboardRequest req, LeaderboardStore store)
 {
     try
     {
-        var entry = store.Add(req.Name ?? string.Empty, req.AverageMs, req.Rounds);
+        var entry = store.Add(req.Name!, req.AverageMs, req.Rounds);
         return Results.Created("/api/leaderboard", new
         {
             name = entry.Name,
