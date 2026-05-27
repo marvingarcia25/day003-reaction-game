@@ -84,7 +84,10 @@ public class LeaderboardStoreTests
         var store = NewStore();
         for (int i = 0; i < 15; i++)
             store.Add($"P{i:D2}", 100.0 + i, 5);
-        Assert.Equal(10, store.GetTop10().Count);
+        var top10 = store.GetTop10();
+        Assert.Equal(10, top10.Count);
+        Assert.Equal(100.0, top10[0].AverageMs);   // fastest included
+        Assert.Equal(109.0, top10[9].AverageMs);   // 10th fastest included
     }
 
     [Fact]
@@ -93,11 +96,11 @@ public class LeaderboardStoreTests
         var store = NewStore();
         for (int i = 0; i < 1000; i++)
             store.Add($"P{i:D4}", 100.0 + i, 5);
-        // Slowest is P0999 at 1099ms. Adding a fast entry triggers the cap — P0999 should be dropped.
+        // Store is full at 1000. Slowest is P0999 at 1099ms.
         store.Add("FAST", 50.0, 5);
         var top10 = store.GetTop10();
-        Assert.Equal(50.0, top10[0].AverageMs);
-        Assert.DoesNotContain(top10, e => e.Name == "P0999");
+        Assert.Equal(50.0, top10[0].AverageMs);        // FAST is fastest
+        Assert.Equal(1000, store.Count);               // cap enforced — store did not grow to 1001
     }
 
     [Fact]
