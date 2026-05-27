@@ -135,20 +135,22 @@ function handleCountdownClick() {
 function showTarget() {
     countdownTimer = null;
     showScreen('active');
-    const arena = document.getElementById('arena');
-    const target = document.getElementById('target');
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    target.style.left = (vw * 0.10 + Math.random() * vw * 0.70) + 'px';
-    target.style.top  = (vh * 0.15 + Math.random() * vh * 0.60) + 'px';
-    target.style.display = 'block';
-    if (penaltyApplied) {
-        const b = document.getElementById('false-start-banner-active');
-        b.textContent = '⚠ FALSE START! +500ms PENALTY';
-        b.style.display = 'block';
-        setTimeout(() => { b.style.display = 'none'; }, 1500);
-    }
-    startTime = performance.now();
+    requestAnimationFrame(() => {
+        const arena = document.getElementById('arena');
+        const target = document.getElementById('target');
+        const w = arena.clientWidth;
+        const h = arena.clientHeight;
+        target.style.left = (w * 0.10 + Math.random() * w * 0.70) + 'px';
+        target.style.top  = (h * 0.15 + Math.random() * h * 0.60) + 'px';
+        target.style.display = 'block';
+        if (penaltyApplied) {
+            const b = document.getElementById('false-start-banner-active');
+            b.textContent = '⚠ FALSE START! +500ms PENALTY';
+            b.style.display = 'block';
+            setTimeout(() => { b.style.display = 'none'; }, 1500);
+        }
+        startTime = performance.now();
+    });
 }
 
 function handleTargetClick(e) {
