@@ -88,7 +88,30 @@ public class LeaderboardApiTests
             new { name = "UNIQUEPLAYER", averageMs = 123.4, rounds = 3 });
         Assert.Equal(HttpStatusCode.Created, postResponse.StatusCode);
         var getResponse = await client.GetAsync("/api/leaderboard");
-        var body = await getResponse.Content.ReadAsStringAsync();
-        Assert.Contains("UNIQUEPLAYER", body);
+        var entries = await getResponse.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
+        Assert.NotNull(entries);
+        Assert.Contains(entries, e => e.Name == "UNIQUEPLAYER");
+    }
+
+    [Fact]
+    public async Task PostLeaderboard_ZeroAverageMs_Returns400()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/leaderboard",
+            new { name = "ACE", averageMs = 0.0, rounds = 5 });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostLeaderboard_WhitespaceName_Returns400()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/leaderboard",
+            new { name = "   ", averageMs = 150.0, rounds = 5 });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }
+
+file record LeaderboardEntryDto(string Name, double AverageMs, int Rounds, DateTime PlayedAt);
