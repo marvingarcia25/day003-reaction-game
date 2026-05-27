@@ -31,7 +31,7 @@
 <div id="screen-countdown" class="hidden">
     <div id="false-start-banner" class="false-start-banner">⚠ FALSE START! +500ms PENALTY</div>
     <div class="status-display">
-        <div class="big-text" id="countdown-text">GET READY</div>
+        <div class="big-text" id="countdown-text">GET READY...</div>
         <div class="hint" id="countdown-hint">Wait for the target...</div>
     </div>
     <div class="game-arena" id="arena-countdown" onclick="handleCountdownClick()"></div>
@@ -46,8 +46,7 @@
 
 <div id="screen-round-result" class="hidden">
     <div class="round-result">
-        <div class="big-text" id="round-num-display"></div>
-        <div class="time" id="round-time-display"></div>
+        <div class="big-text" id="round-result-display"></div>
         <div class="penalty-note hidden" id="penalty-note">+500ms PENALTY APPLIED</div>
     </div>
 </div>
@@ -62,7 +61,7 @@
     </table>
     <div class="submit-form">
         <input class="callsign-input" id="callsign" type="text" maxlength="30" placeholder="ENTER CALLSIGN" />
-        <button class="btn-primary" style="width:auto;padding:0.6rem 1.2rem" onclick="submitScore()">SUBMIT</button>
+        <button class="btn-primary" style="width:auto;padding:0.6rem 1.2rem" onclick="submitScore()">SUBMIT TO LEADERBOARD</button>
     </div>
     <button class="btn-primary" onclick="resetGame()">[ PLAY AGAIN ]</button>
 </div>
@@ -114,7 +113,7 @@ function startNextRound() {
     currentRound++;
     showScreen('countdown');
     document.getElementById('false-start-banner').style.display = 'none';
-    document.getElementById('countdown-text').textContent = 'GET READY';
+    document.getElementById('countdown-text').textContent = 'GET READY...';
     document.getElementById('countdown-hint').textContent =
         'Round ' + currentRound + ' of ' + selectedRounds + ' — wait for the target...';
     const delay = 1000 + Math.random() * 3000;
@@ -138,10 +137,10 @@ function showTarget() {
     showScreen('active');
     const arena = document.getElementById('arena');
     const target = document.getElementById('target');
-    const w = arena.clientWidth;
-    const h = arena.clientHeight;
-    target.style.left = (w * 0.15 + Math.random() * w * 0.70) + 'px';
-    target.style.top  = (h * 0.15 + Math.random() * h * 0.65) + 'px';
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    target.style.left = (vw * 0.10 + Math.random() * vw * 0.70) + 'px';
+    target.style.top  = (vh * 0.15 + Math.random() * vh * 0.60) + 'px';
     target.style.display = 'block';
     if (penaltyApplied) {
         const b = document.getElementById('false-start-banner-active');
@@ -163,8 +162,8 @@ function handleTargetClick(e) {
 
 function showRoundResult(ms, wasPenalty) {
     showScreen('round-result');
-    document.getElementById('round-num-display').textContent = 'Round ' + currentRound;
-    document.getElementById('round-time-display').textContent = Math.round(ms) + 'ms';
+    document.getElementById('round-result-display').textContent =
+        'ROUND ' + currentRound + ' — ' + Math.round(ms) + 'ms';
     document.getElementById('penalty-note').classList.toggle('hidden', !wasPenalty);
     setTimeout(() => {
         if (currentRound < selectedRounds) {
@@ -253,6 +252,11 @@ async function loadLeaderboard(containerId, highlight) {
             row.appendChild(rounds);
             el.appendChild(row);
         });
+        if (highlight) {
+            setTimeout(() => {
+                el.querySelectorAll('.leaderboard-row.highlight').forEach(r => r.classList.remove('highlight'));
+            }, 3000);
+        }
     } catch {
         el.innerHTML = '<p class="empty-lb">[ LEADERBOARD UNAVAILABLE ]</p>';
     }

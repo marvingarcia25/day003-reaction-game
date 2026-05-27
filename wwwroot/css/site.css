@@ -17,25 +17,22 @@ html, body {
     overflow-x: hidden;
 }
 
-.scanlines {
+body::before {
+    content: '';
     position: fixed;
     inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent 0px,
-        transparent 2px,
-        rgba(0, 0, 0, 0.15) 2px,
-        rgba(0, 0, 0, 0.15) 4px
-    );
+    background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
     pointer-events: none;
-    z-index: 100;
+    z-index: 9999;
 }
 
 .terminal {
-    max-width: 640px;
+    max-width: 620px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
     min-height: 100vh;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 40px rgba(0,255,70,0.08);
 }
 
 h1 {
@@ -143,7 +140,7 @@ h1 {
 
 @keyframes pulse {
     0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.08); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
 }
 
 .false-start-banner {
@@ -156,6 +153,12 @@ h1 {
     letter-spacing: 0.12rem;
     text-transform: uppercase;
     margin-bottom: 1rem;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
 }
 
 .round-result { text-align: center; padding: 2rem; }
