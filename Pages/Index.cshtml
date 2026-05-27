@@ -1,10 +1,245 @@
-﻿@page
-@model IndexModel
+@page
+@model ReactionGame.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "REACTION TEST";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div id="screen-idle">
+    <h1>Reaction Test</h1>
+    <p class="subtitle">Day 003 — 1000 Days Challenge</p>
+
+    <div class="rule-box">
+        <span class="rule-label">⚠ False Start Rule</span>
+        Clicking before the target appears counts as a false start —
+        <strong>+500ms</strong> will be added to that round's time.
+    </div>
+
+    <p class="leaderboard-title">Select Rounds</p>
+    <div class="round-picker">
+        <button class="round-btn selected" data-rounds="3" onclick="selectRounds(3)">3</button>
+        <button class="round-btn" data-rounds="5" onclick="selectRounds(5)">5</button>
+        <button class="round-btn" data-rounds="10" onclick="selectRounds(10)">10</button>
+    </div>
+
+    <button class="btn-primary" onclick="startGame()">[ START GAME ]</button>
+    <hr class="divider">
+    <p class="leaderboard-title">Leaderboard — Top 10</p>
+    <div id="leaderboard-idle"></div>
+    <p class="day-label">Day 003 — 1000 Days Challenge</p>
 </div>
+
+<div id="screen-countdown" class="hidden">
+    <div id="false-start-banner" class="false-start-banner">⚠ FALSE START! +500ms PENALTY</div>
+    <div class="status-display">
+        <div class="big-text" id="countdown-text">GET READY</div>
+        <div class="hint" id="countdown-hint">Wait for the target...</div>
+    </div>
+    <div class="game-arena" id="arena-countdown" onclick="handleCountdownClick()"></div>
+</div>
+
+<div id="screen-active" class="hidden">
+    <div id="false-start-banner-active" class="false-start-banner"></div>
+    <div class="game-arena" id="arena">
+        <button class="target" id="target" onclick="handleTargetClick(event)"></button>
+    </div>
+</div>
+
+<div id="screen-round-result" class="hidden">
+    <div class="round-result">
+        <div class="big-text" id="round-num-display"></div>
+        <div class="time" id="round-time-display"></div>
+        <div class="penalty-note hidden" id="penalty-note">+500ms PENALTY APPLIED</div>
+    </div>
+</div>
+
+<div id="screen-finished" class="hidden">
+    <h1>Results</h1>
+    <p class="subtitle" id="finished-subtitle"></p>
+    <table class="results-table">
+        <thead><tr><th>Round</th><th>Time</th><th></th></tr></thead>
+        <tbody id="results-body"></tbody>
+        <tfoot><tr class="avg-row"><td>Average</td><td id="avg-display" colspan="2"></td></tr></tfoot>
+    </table>
+    <div class="submit-form">
+        <input class="callsign-input" id="callsign" type="text" maxlength="30" placeholder="ENTER CALLSIGN" />
+        <button class="btn-primary" style="width:auto;padding:0.6rem 1.2rem" onclick="submitScore()">SUBMIT</button>
+    </div>
+    <button class="btn-primary" onclick="resetGame()">[ PLAY AGAIN ]</button>
+</div>
+
+<div id="screen-submitted" class="hidden">
+    <h1>Score Saved</h1>
+    <p class="subtitle">Leaderboard Updated</p>
+    <hr class="divider">
+    <p class="leaderboard-title">Leaderboard — Top 10</p>
+    <div id="leaderboard-submitted"></div>
+    <hr class="divider">
+    <button class="btn-primary" onclick="resetGame()">[ PLAY AGAIN ]</button>
+    <p class="day-label">Day 003 — 1000 Days Challenge</p>
+</div>
+
+@section Scripts {
+<script>
+let selectedRounds = 3;
+let currentRound = 0;
+let roundTimes = [];
+let penaltyApplied = false;
+let startTime = 0;
+let countdownTimer = null;
+let lastAvgMs = 0;
+let highlightName = null;
+
+function selectRounds(n) {
+    selectedRounds = n;
+    document.querySelectorAll('.round-btn').forEach(b => {
+        b.classList.toggle('selected', parseInt(b.dataset.rounds) === n);
+    });
+}
+
+function showScreen(id) {
+    ['idle','countdown','active','round-result','finished','submitted'].forEach(s => {
+        document.getElementById('screen-' + s).classList.add('hidden');
+    });
+    document.getElementById('screen-' + id).classList.remove('hidden');
+}
+
+function startGame() {
+    currentRound = 0;
+    roundTimes = [];
+    startNextRound();
+}
+
+function startNextRound() {
+    penaltyApplied = false;
+    currentRound++;
+    showScreen('countdown');
+    document.getElementById('false-start-banner').style.display = 'none';
+    document.getElementById('countdown-text').textContent = 'GET READY';
+    document.getElementById('countdown-hint').textContent =
+        'Round ' + currentRound + ' of ' + selectedRounds + ' — wait for the target...';
+    const delay = 1000 + Math.random() * 3000;
+    countdownTimer = setTimeout(showTarget, delay);
+}
+
+function handleCountdownClick() {
+    if (countdownTimer === null) return;
+    clearTimeout(countdownTimer);
+    countdownTimer = null;
+    penaltyApplied = true;
+    document.getElementById('false-start-banner').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('false-start-banner').style.display = 'none';
+        showTarget();
+    }, 800);
+}
+
+function showTarget() {
+    countdownTimer = null;
+    showScreen('active');
+    const arena = document.getElementById('arena');
+    const target = document.getElementById('target');
+    const w = arena.clientWidth;
+    const h = arena.clientHeight;
+    target.style.left = (w * 0.15 + Math.random() * w * 0.70) + 'px';
+    target.style.top  = (h * 0.15 + Math.random() * h * 0.65) + 'px';
+    target.style.display = 'block';
+    if (penaltyApplied) {
+        const b = document.getElementById('false-start-banner-active');
+        b.textContent = '⚠ FALSE START! +500ms PENALTY';
+        b.style.display = 'block';
+        setTimeout(() => { b.style.display = 'none'; }, 1500);
+    }
+    startTime = performance.now();
+}
+
+function handleTargetClick(e) {
+    e.stopPropagation();
+    const raw = performance.now() - startTime;
+    const roundMs = penaltyApplied ? raw + 500 : raw;
+    roundTimes.push({ ms: roundMs, penalty: penaltyApplied });
+    document.getElementById('target').style.display = 'none';
+    showRoundResult(roundMs, penaltyApplied);
+}
+
+function showRoundResult(ms, wasPenalty) {
+    showScreen('round-result');
+    document.getElementById('round-num-display').textContent = 'Round ' + currentRound;
+    document.getElementById('round-time-display').textContent = Math.round(ms) + 'ms';
+    document.getElementById('penalty-note').classList.toggle('hidden', !wasPenalty);
+    setTimeout(() => {
+        if (currentRound < selectedRounds) {
+            startNextRound();
+        } else {
+            showFinished();
+        }
+    }, 1500);
+}
+
+function showFinished() {
+    showScreen('finished');
+    document.getElementById('finished-subtitle').textContent = selectedRounds + ' rounds complete';
+    const tbody = document.getElementById('results-body');
+    tbody.innerHTML = '';
+    roundTimes.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + Math.round(r.ms) + 'ms</td><td>' +
+            (r.penalty ? '<span style="color:var(--pink);font-size:0.7rem">+500ms penalty</span>' : '') + '</td>';
+        tbody.appendChild(tr);
+    });
+    const avg = roundTimes.reduce((s, r) => s + r.ms, 0) / roundTimes.length;
+    lastAvgMs = avg;
+    document.getElementById('avg-display').textContent = avg.toFixed(1) + 'ms';
+}
+
+async function submitScore() {
+    const name = document.getElementById('callsign').value.trim();
+    if (!name) { document.getElementById('callsign').focus(); return; }
+    if (name.length > 30) { alert('CALLSIGN TOO LONG (max 30)'); return; }
+    highlightName = name.toUpperCase();
+    try {
+        const res = await fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, averageMs: lastAvgMs, rounds: selectedRounds })
+        });
+        if (!res.ok) { alert('Submit failed. Try again.'); return; }
+        showScreen('submitted');
+        loadLeaderboard('leaderboard-submitted', highlightName);
+    } catch {
+        alert('Submit failed. Try again.');
+    }
+}
+
+function resetGame() {
+    document.getElementById('callsign').value = '';
+    highlightName = null;
+    showScreen('idle');
+    loadLeaderboard('leaderboard-idle', null);
+}
+
+async function loadLeaderboard(containerId, highlight) {
+    const el = document.getElementById(containerId);
+    try {
+        const res = await fetch('/api/leaderboard');
+        const entries = await res.json();
+        if (!entries.length) {
+            el.innerHTML = '<p class="empty-lb">[ NO SCORES YET ]</p>';
+            return;
+        }
+        el.innerHTML = entries.map((e, i) =>
+            '<div class="leaderboard-row' +
+            (highlight && e.name.toUpperCase() === highlight ? ' highlight' : '') + '">' +
+            '<span class="rank">' + (i + 1) + '</span>' +
+            '<span class="lb-name">' + e.name + '</span>' +
+            '<span class="lb-time">' + e.averageMs.toFixed(1) + 'ms</span>' +
+            '<span class="lb-rounds">' + e.rounds + 'rnd</span>' +
+            '</div>'
+        ).join('');
+    } catch {
+        el.innerHTML = '<p class="empty-lb">[ LEADERBOARD UNAVAILABLE ]</p>';
+    }
+}
+
+loadLeaderboard('leaderboard-idle', null);
+</script>
+}
