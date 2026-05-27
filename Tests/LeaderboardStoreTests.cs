@@ -94,13 +94,17 @@ public class LeaderboardStoreTests
     public void Add_Over1000Entries_DropsHighestAverageMs()
     {
         var store = NewStore();
-        for (int i = 0; i < 1000; i++)
-            store.Add($"P{i:D4}", 100.0 + i, 5);
-        // Store is full at 1000. Slowest is P0999 at 1099ms.
-        store.Add("FAST", 50.0, 5);
+        // Fill with 10 fast entries + 990 slow entries = 1000 total
+        for (int i = 1; i <= 10; i++)
+            store.Add($"FAST{i:D2}", (double)i, 5);
+        for (int i = 0; i < 990; i++)
+            store.Add($"SLOW{i:D4}", 500.0, 5);
+        // Trigger cap: NEW(5.5ms) should make a SLOW(500ms) get evicted — NOT a FAST entry
+        store.Add("NEW", 5.5, 5);
         var top10 = store.GetTop10();
-        Assert.Equal(50.0, top10[0].AverageMs);        // FAST is fastest
-        Assert.Equal(1000, store.Count);               // cap enforced — store did not grow to 1001
+        Assert.Equal(1000, store.Count);                              // cap enforced
+        Assert.Contains(top10, e => e.Name == "NEW");                 // NEW was kept (not the evicted entry)
+        Assert.DoesNotContain(top10, e => e.AverageMs >= 500.0);     // no SLOW entries leaked into top10
     }
 
     [Fact]
