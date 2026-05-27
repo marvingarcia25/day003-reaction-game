@@ -221,20 +221,38 @@ async function loadLeaderboard(containerId, highlight) {
     const el = document.getElementById(containerId);
     try {
         const res = await fetch('/api/leaderboard');
+        if (!res.ok) throw new Error('Leaderboard unavailable');
         const entries = await res.json();
+        el.innerHTML = '';
         if (!entries.length) {
-            el.innerHTML = '<p class="empty-lb">[ NO SCORES YET ]</p>';
+            const p = document.createElement('p');
+            p.className = 'empty-lb';
+            p.textContent = '[ NO SCORES YET ]';
+            el.appendChild(p);
             return;
         }
-        el.innerHTML = entries.map((e, i) =>
-            '<div class="leaderboard-row' +
-            (highlight && e.name.toUpperCase() === highlight ? ' highlight' : '') + '">' +
-            '<span class="rank">' + (i + 1) + '</span>' +
-            '<span class="lb-name">' + e.name + '</span>' +
-            '<span class="lb-time">' + e.averageMs.toFixed(1) + 'ms</span>' +
-            '<span class="lb-rounds">' + e.rounds + 'rnd</span>' +
-            '</div>'
-        ).join('');
+        entries.forEach((e, i) => {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row' +
+                (highlight && e.name.toUpperCase() === highlight ? ' highlight' : '');
+            const rank = document.createElement('span');
+            rank.className = 'rank';
+            rank.textContent = i + 1;
+            const name = document.createElement('span');
+            name.className = 'lb-name';
+            name.textContent = e.name;
+            const time = document.createElement('span');
+            time.className = 'lb-time';
+            time.textContent = e.averageMs.toFixed(1) + 'ms';
+            const rounds = document.createElement('span');
+            rounds.className = 'lb-rounds';
+            rounds.textContent = e.rounds + 'rnd';
+            row.appendChild(rank);
+            row.appendChild(name);
+            row.appendChild(time);
+            row.appendChild(rounds);
+            el.appendChild(row);
+        });
     } catch {
         el.innerHTML = '<p class="empty-lb">[ LEADERBOARD UNAVAILABLE ]</p>';
     }
