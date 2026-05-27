@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace day3_ReactionGame.Pages;
+namespace ReactionGame.Pages;
 
 public class PrivacyModel : PageModel
 {
